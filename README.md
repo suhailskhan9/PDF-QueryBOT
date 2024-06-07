@@ -8,7 +8,7 @@ The application is built using a microservices architecture, with the following 
 
 - **Frontend**: Developed with React.js, providing a user interface for document upload and interaction.
 - **Backend**: Built with FastAPI, handling PDF uploads, question processing, and answer retrieval.
-- **NLP Processing**: Utilizes LangChain/LLamaIndex for processing natural language questions and generating answers from PDF content.
+- **NLP Processing**: Utilizes LangChain for processing natural language questions and generating answers from PDF content.
 
 ## Setup Instructions
 
