@@ -17,30 +17,30 @@ The application is built using a microservices architecture, with the following 
    git clone https://github.com/suhailskhan9/PDF-QueryBOT.git
    cd PDF-QueryBOT
 
-2. Install dependencies:
+2. **Install dependencies**:
    - For the backend (inside the backend directory):
    ```bash
    pip install -r requirements.txt
-
+   ```
    - For the frontend (inside the frontend directory):
    ```bash
    npm install
 
-3. Start the backend server:
+3. **Start the backend server**:
    ```bash
    uvicorn main:app --reload
 
-4. Start the frontend application:
+4. **Start the frontend application**:
    ```bash
    npm start
 
 ## API Documentation
-- Upload PDF:
+- **Upload PDF**:
    - Endpoint: /upload
    - Method: POST
    - Body: FormData with the PDF file
    - Response: JSON with the stored file metadata
-- Ask Question:
+- **Ask Question**:
   - Endpoint: /ask
   - Method: POST
   - Body: JSON with document_id and question
