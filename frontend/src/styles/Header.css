@@ -1,0 +1,47 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2rem 3rem;
+
+    background-color: #f8f9fa;
+    /* border-bottom: 1px solid #dee2e6; */
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  .logo img {
+    height: 40px;
+  }
+  
+  .upload-section {
+    display: flex;
+    align-items: center;
+  }
+  
+  .file-name {
+    margin-right: 1rem;
+    font-size: 1rem;
+  }
+  
+  .upload-button {
+    background-color: #FFFFFF;
+    padding: 0.5rem 2.5rem;
+    border: 2px solid black;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .addIcon{
+    margin-right: 0.5rem;
+  }
+  .upload-button input {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  
