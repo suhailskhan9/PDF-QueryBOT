@@ -107,7 +107,7 @@ const ChatComponent = () => {
             setQuestion(''); // Clear the question input
             setStatus(''); // Clear the status
             for (let i = 0; i < newAnswer.length; i++) {
-                await new Promise(resolve => setTimeout(resolve, 50)); // Adjust the timeout as needed for typing speed
+                await new Promise(resolve => setTimeout(resolve, 100)); // Adjust the timeout as needed for typing speed
                 currentAnswer += newAnswer[i];
                 setChatHistory([...chatHistory, { question, answer: currentAnswer }]);
             }
