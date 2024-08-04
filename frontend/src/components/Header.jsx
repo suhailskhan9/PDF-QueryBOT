@@ -22,7 +22,7 @@ function Header() {
       formData.append('files', selectedFiles[i]);
     }
     try {
-      await axios.post('http://localhost:8000/upload', formData, {
+      await axios.post('https://pdf-querybot.onrender.com/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

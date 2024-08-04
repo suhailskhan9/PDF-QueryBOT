@@ -95,7 +95,7 @@ const ChatComponent = () => {
     const handleAskQuestion = async () => {
         try {
             setStatus('Waiting for response...');
-            const response = await axios.post('http://localhost:8000/ask', {
+            const response = await axios.post('https://pdf-querybot.onrender.com/ask', {
                 question,
             });
             const newAnswer = response.data.answer;
