@@ -80,7 +80,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import '../styles/ChatComponent.css'; // Import the CSS file
-import chatLogo from '../assets/chatLogo.png'
+import chatLogo from '../assets/chatLogo.avif'
 import userLogo from '../assets/userLogo.png'
 import sendIcon from '../assets/sendIcon.png'
 
