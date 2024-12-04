@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import '../styles/Header.css';
-import logo from '../assets/AIPlanetLogo.png'
+import logo from '../assets/logo.avif'
 import addIcon from '../assets/gala_add.png'
 function Header() {
   const [fileName, setFileName] = useState('');
