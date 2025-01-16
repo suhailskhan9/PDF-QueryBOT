@@ -86,21 +86,6 @@ def summarize_answer(answer_text, context_text, model_name="gemini-pro"):
     print('result[0].text ', clean_text)
     return clean_text
 
-    # Print all attributes
-    # print(result.__dict__)
-
-    # # Get methods of the object
-    # print(dir(result))
-
-
-    # result = ""
-    # for generation in response.generations:
-    #     text = str(generation[0]).strip()  # Assuming the first element is the text
-    #     result += text;
-    # # Optionally, remove any remaining extra line breaks
-    # result = "\n".join(result.splitlines())  # Combine lines with single newline
-    # return result
-
 
 @app.post("/ask")
 async def ask_question(question_request: QuestionRequest):
@@ -109,10 +94,9 @@ async def ask_question(question_request: QuestionRequest):
     docs = vector_store.similarity_search(question_request.question)
     chain = get_conversational_chain()
     response = chain({"input_documents": docs, "question": question_request.question}, return_only_outputs=True)
-    # return JSONResponse(content={"answer": response["output_text"]})
     answer_text = response.get("output_text", "")
     print('answer_text', answer_text)
-    context_text = response.get("context", "")  # Assuming "context" key holds the document content in the response
+    context_text = response.get("context", "")  
     summary = summarize_answer(answer_text, context_text)
     return JSONResponse(content={"answer": summary})
 

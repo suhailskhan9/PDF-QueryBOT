@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import axios from 'axios';
 import '../styles/Header.css';
-import logo from '../assets/logo.avif'
+import logo from '../assets/logo.png'
 import addIcon from '../assets/gala_add.png'
-function Header() {
+import Spinner from './Spinner';
+function Header({ files, setFiles, setLoading, loading }) {
   const [fileName, setFileName] = useState('');
-  const [files, setFiles] = useState([]);
 
   const handleFileUpload = (event) => {
     const selectedFiles = event.target.files;
     if (selectedFiles.length > 0) {
       setFileName(selectedFiles[0].name);
       setFiles(selectedFiles);
-      handleUpload(selectedFiles); // Trigger the upload
+      handleUpload(selectedFiles); 
     }
   };
 
   const handleUpload = async (selectedFiles) => {
+    setLoading(true);
     const formData = new FormData();
     for (let i = 0; i < selectedFiles.length; i++) {
       formData.append('files', selectedFiles[i]);
@@ -28,29 +29,31 @@ function Header() {
         },
       });
     } catch (error) {
-      if (error.response) {
-        console.error('Server responded with status:', error.response.status);
-        console.error('Response data:', error.response.data);
-      } else if (error.request) {
-        console.error('No response received from server.');
-      } else {
-        console.error('Error setting up the request:', error.message);
-      }
+    console.error('Error uploading file:',error);
+    } finally {
+      setLoading(false); 
     }
   };
 
   return (
     <header className="header">
       <div className="logo">
-        <img src={logo} alt="Logo" />
+        <img src={logo} alt="Logo" /> 
+        <span className="logo-text">PDF QueryBot</span>
       </div>
+      
       <div className="upload-section">
-        <span className="file-name">{fileName}</span>
+        {files.length > 0 && (
+          <span className={'file-name file-uploaded'}>
+            {fileName} {files.length > 1 ? `+${files.length - 1}` : ''}
+          </span>
+        )}
         <label className="upload-button">
           <img src = {addIcon} alt="" className='addIcon'/>
           <input type="file" multiple accept=".pdf" onChange={handleFileUpload} />
-          Upload PDF
+            Upload PDF
         </label>
+        {loading && <Spinner />}
       </div>
     </header>
   );
