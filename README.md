@@ -34,14 +34,46 @@ The application is built using a microservices architecture, with the following 
    ```bash
    npm start
 
-## API Documentation
-- **Upload PDF**:
-   - Endpoint: /upload
-   - Method: POST
-   - Body: FormData with the PDF file
-   - Response: JSON with the stored file metadata
-- **Ask Question**:
-  - Endpoint: /ask
-  - Method: POST
-  - Body: JSON with document_id and question
-  - Response: JSON with the answer to the question
+# API Documentation
+
+## 1. Upload PDFs
+Uploads PDF files, extracts text, splits it into chunks, and stores vector embeddings for retrieval.
+
+### **Endpoint**
+`POST /upload`
+
+### **Request**
+- **Content-Type:** `multipart/form-data`
+- **Body Parameters:**
+
+| Parameter  | Type               | Required | Description                  |
+|------------|--------------------|----------|------------------------------|
+| `files`    | `List[UploadFile]` | ✅ Yes   | List of PDF files to upload |
+
+### **Response**
+- **Success (200 OK)**
+  ```json
+  {
+    "message": "PDFs uploaded and processed successfully"
+  }
+## 2. Ask a Question
+Queries the stored PDFs for an answer based on stored embeddings.
+
+### **Endpoint**
+`POST /ask`
+
+### **Request**
+- **Content-Type:** `application/json`
+- **Body Parameters:**
+
+| Parameter  | Type   | Required | Description                    |
+|------------|--------|----------|--------------------------------|
+| `question` | `str` | ✅ Yes   | The question to ask based on uploaded PDFs |
+
+### **Response**
+- **Success (200 OK)**
+  ```json
+  {
+    "answer": "Summarized response from the PDFs"
+  }
+
