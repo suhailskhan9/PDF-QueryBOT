@@ -71,7 +71,7 @@ async def upload_pdfs(files: List[UploadFile] = File(...)):
     get_vector_store(text_chunks)
     return {"message": "PDFs uploaded and processed successfully"}
 
-def summarize_answer(answer_text, context_text, model_name="gemini-pro"):
+def summarize_answer(answer_text, context_text, model_name="gemini-2.0-flash"):
     model = GoogleGenerativeAI(model=model_name)
     prompt = f"Summarize the answer in a concise and informative way, highlighting the relevant parts of the context:\n\nAnswer: {answer_text}\n\nContext: {context_text}"
     prompt = [prompt]
