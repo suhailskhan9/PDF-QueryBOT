@@ -50,12 +50,19 @@ def get_vector_store(text_chunks):
     vector_store.save_local("faiss_index")
 
 def get_conversational_chain():
-    prompt_template = """
-    Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
-    provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
-    Context:\n {context}?\n
-    Question: \n{question}\n
-
+    prompt_template ="""
+    Provide a clear, well-structured answer to the question using only the provided context.
+    
+    FORMATTING RULES:
+    - Write in plain text only
+    - Do NOT use asterisks (*), underscores (_), or hashtags (#)
+    - Use simple bullet points with dashes (-) if needed
+    - Keep paragraphs concise and readable
+    - If the answer is not in the context, say "The answer is not available in the provided context"
+    
+    Context: {context}
+    Question: {question}
+    
     Answer:
     """
     model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)
@@ -71,20 +78,6 @@ async def upload_pdfs(files: List[UploadFile] = File(...)):
     get_vector_store(text_chunks)
     return {"message": "PDFs uploaded and processed successfully"}
 
-def summarize_answer(answer_text, context_text, model_name="gemini-2.0-flash"):
-    model = GoogleGenerativeAI(model=model_name)
-    prompt = f"Summarize the answer in a concise and informative way, highlighting the relevant parts of the context:\n\nAnswer: {answer_text}\n\nContext: {context_text}"
-    prompt = [prompt]
-    # summary = model.generate(prompt, temperature=0.7, max_length=200)
-    # return summary[0]
-    response = model.generate(prompt, temperature=0.7, max_length=2000)
-    # Handle potential response structure variations
-    result = response.generations
-    print('result',result)
-    raw_text = result[0][0].text
-    clean_text = raw_text.replace('*', '')
-    print('result[0].text ', clean_text)
-    return clean_text
 
 
 @app.post("/ask")
@@ -97,8 +90,8 @@ async def ask_question(question_request: QuestionRequest):
     answer_text = response.get("output_text", "")
     print('answer_text', answer_text)
     context_text = response.get("context", "")  
-    summary = summarize_answer(answer_text, context_text)
-    return JSONResponse(content={"answer": summary})
+    print('context_text', context_text)
+    return JSONResponse(content={"answer": answer_text})
 
 if __name__ == "__main__":
     import uvicorn
