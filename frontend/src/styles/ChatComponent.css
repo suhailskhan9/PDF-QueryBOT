@@ -182,7 +182,11 @@
     line-height: 1.7;
     color: #777166;
 }
-
+.sources {
+    margin: 0 0 0.5em 40px;
+    font-size: 0.8rem;
+    color: #666;
+}
 /* Firefox */
 .chat-history {
     scrollbar-width: thin;

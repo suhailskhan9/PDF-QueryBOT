@@ -1,5 +1,4 @@
 import os
-import re
 import time
 import uuid
 import shutil
@@ -9,7 +8,7 @@ from typing import List
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -31,7 +30,7 @@ MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", 20))
 MAX_FILES = int(os.getenv("MAX_FILES", 5))
 SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", 6 * 3600))
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "gemini-embedding-2")
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.5-flash")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.6-flash")
 ALLOWED_ORIGINS = [
     o.strip()
     for o in os.getenv(
@@ -56,7 +55,14 @@ app.add_middleware(
 
 # ---------- Created once, reused for every request ----------
 embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
-llm = ChatGoogleGenerativeAI(model=LLM_MODEL, temperature=0.3)
+LLM_TIMEOUT_SECONDS = int(os.getenv("LLM_TIMEOUT_SECONDS", 60))
+
+llm = ChatGoogleGenerativeAI(
+    model=LLM_MODEL,
+    temperature=0.3,
+    timeout=LLM_TIMEOUT_SECONDS,
+    max_retries=2,
+)
 
 PROMPT = PromptTemplate(
     input_variables=["context", "question"],
@@ -69,7 +75,8 @@ FORMATTING RULES:
 - Do NOT use asterisks (*), underscores (_), or hashtags (#)
 - Use simple bullet points with dashes (-) if needed
 - Keep paragraphs concise and readable
-- If the answer is not in the context, say "The answer is not available in the provided context"
+- If the answer is not in the context, set answerable to false and write exactly: "The answer is not available in the provided context"
+- If the answer is in the context, set answerable to true
 
 Context:
 <<<
@@ -77,13 +84,18 @@ Context:
 >>>
 
 Question: {question}
-
-Answer:
 """,
 )
 
+class AnswerSchema(BaseModel):
+    answer: str = Field(description="Plain-text answer based only on the context.")
+    answerable: bool = Field(
+        description="True only if the context contains the answer; otherwise false."
+    )
+
 # One generation call. Retrieval is done separately by FAISS (embedding call only).
-chain = PROMPT | llm | StrOutputParser()
+structured_llm = llm.with_structured_output(AnswerSchema)
+chain = PROMPT | structured_llm 
 
 splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
 
@@ -110,11 +122,11 @@ def cleanup_old_sessions():
             logger.info("Deleted expired session %s", name)
 
 
-def extract_pdf_text(upload: UploadFile) -> str:
+def extract_pdf_pages(upload: UploadFile):
     reader = PdfReader(upload.file)
     if reader.is_encrypted:
         raise ValueError("encrypted")
-    return "\n".join((page.extract_text() or "") for page in reader.pages)
+    return [(i + 1, page.extract_text() or "") for i, page in enumerate(reader.pages)]
 
 
 cleanup_old_sessions()  # also run once at startup
@@ -149,22 +161,25 @@ def upload_pdfs(files: List[UploadFile] = File(...)):
             raise HTTPException(413, f"{name} exceeds {MAX_FILE_SIZE_MB} MB.")
 
         try:
-            text = extract_pdf_text(f)
+            pages = extract_pdf_pages(f)
         except ValueError:
             raise HTTPException(400, f"{name} is password-protected.")
         except Exception:
             logger.exception("PDF parsing failed for an uploaded file")
             raise HTTPException(400, f"Could not read {name}. It may be corrupt.")
 
-        if not text.strip():
+        if not any(text.strip() for _, text in pages):
             raise HTTPException(
                 422, f"No extractable text in {name}. It may be a scanned image PDF."
             )
 
-        # Chunk per file so chunks never mix documents, and tag the source
-        for chunk in splitter.split_text(text):
-            texts.append(chunk)
-            metadatas.append({"source": name})
+        # Chunk per page so every chunk has an exact file and page
+        for page_no, page_text in pages:
+            if not page_text.strip():
+                continue
+            for chunk in splitter.split_text(page_text):
+                texts.append(chunk)
+                metadatas.append({"source": name, "page": page_no})
 
     try:
         store = FAISS.from_texts(texts, embedding=embeddings, metadatas=metadatas)
@@ -212,17 +227,26 @@ def ask_question(req: QuestionRequest):
     context = "\n\n".join(d.page_content for d in docs)
 
     try:
-        answer = chain.invoke({"context": context, "question": question})  # the one LLM call
+        result = chain.invoke({"context": context, "question": question})
+        if result is None:  # structured output can come back empty
+            raise ValueError("empty structured output")
     except Exception:
         logger.exception("LLM call failed session=%s", session_id)
         raise HTTPException(502, "The model failed to respond. Please try again.")
 
-    # Log metrics only, never document or answer content
+    sources, seen = [], set()
+    if result.answerable:
+        for d in docs:
+            key = (d.metadata.get("source"), d.metadata.get("page"))
+            if key not in seen:
+                seen.add(key)
+                sources.append({"source": key[0], "page": key[1]})
+
     logger.info(
-        "ask ok session=%s chunks=%d seconds=%.2f",
-        session_id, len(docs), time.perf_counter() - started,
+        "ask ok session=%s chunks=%d answerable=%s seconds=%.2f",
+        session_id, len(docs), result.answerable, time.perf_counter() - started,
     )
-    return {"answer": answer}
+    return {"answer": result.answer, "answerable": result.answerable, "sources": sources}
 
 
 @app.delete("/session/{session_id}")

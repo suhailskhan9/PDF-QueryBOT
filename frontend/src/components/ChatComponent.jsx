@@ -39,7 +39,7 @@ const ChatComponent = ({ session, loading, onSessionExpired }) => {
       });
       // Functional update: never overwrites other messages
       setChatHistory((h) =>
-        h.map((m) => (m.id === id ? { ...m, answer: data.answer } : m))
+        h.map((m) => (m.id === id ? { ...m, answer: data.answer, sources: data.sources, answerable: data.answerable } : m))
       );
       setStatus("");
     } catch (error) {
@@ -65,21 +65,29 @@ const ChatComponent = ({ session, loading, onSessionExpired }) => {
       <div className="chat-section">
         <div className="chat-history">
           {chatHistory.length === 0 ? (
-            <div className="welcome-message">
+            <div className="welcome-message" data-testid="welcome-message">
               <h2>Welcome to PDF Query Bot</h2>
               <p>Upload PDF file/files and ask questions about its content.</p>
             </div>
           ) : (
             chatHistory.map((chat) => (
-              <div key={chat.id} className="chat-message">
+              <div key={chat.id} className="chat-message" data-testid="chat-message">
                 <div className="user-chat-entry">
                   <img src={userLogo} alt="User" />
-                  <p>{chat.question}</p>
+                  <p data-testid="user-message">{chat.question}</p>
                 </div>
                 {chat.answer && (
                   <div className="ai-chat-entry">
                     <img src={chatLogo} alt="Q" className="chat-logo" />
-                    <p>{chat.answer}</p>
+                    <p data-testid="ai-message">{chat.answer}</p>
+                  </div>
+                )}
+                {chat.sources?.length > 0 && (
+                  <div className="sources" data-testid="sources">
+                    Sources:{" "}
+                    {chat.sources
+                      .map((s) => `${s.source}${s.page ? ` (p. ${s.page})` : ""}`)
+                      .join(", ")}
                   </div>
                 )}
               </div>
@@ -88,17 +96,18 @@ const ChatComponent = ({ session, loading, onSessionExpired }) => {
           <div ref={bottomRef} />
         </div>
 
-        {status && <div className="status-message">{status}</div>}
+        {status && <div className="status-message" data-testid="status-message">{status}</div>}
 
         <div className="chat-input-container">
           {!session && (
-            <div className="upload-warning">
+            <div className="upload-warning" data-testid="upload-warning">
               Please upload a PDF file before asking questions.
             </div>
           )}
           <div className="chat-input">
             <input
               type="text"
+              data-testid="question-input"
               placeholder="Type your question..."
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
@@ -108,6 +117,7 @@ const ChatComponent = ({ session, loading, onSessionExpired }) => {
             <img
               src={sendIcon}
               alt="Send"
+              data-testid="send-button"
               onClick={handleAskQuestion}
               style={{ cursor: canAsk ? "pointer" : "not-allowed" }}
             />

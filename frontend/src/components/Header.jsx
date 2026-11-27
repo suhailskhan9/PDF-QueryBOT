@@ -49,9 +49,9 @@ function Header({ session, setSession, loading, setLoading }) {
       </div>
 
       <div className="upload-section">
-        {uploadError && <span className="file-name file-error">{uploadError}</span>}
+        {uploadError && <span className="file-name file-error" data-testid="upload-error">{uploadError}</span>}
         {names.length > 0 && (
-          <span className="file-name file-uploaded">
+          <span className="file-name file-uploaded" data-testid="file-name">
             {names[0]} {names.length > 1 ? `+${names.length - 1}` : ""}
           </span>
         )}
@@ -63,10 +63,11 @@ function Header({ session, setSession, loading, setLoading }) {
             accept=".pdf"
             onChange={handleFileUpload}
             disabled={loading}
+            data-testid="file-input"
           />
           Upload PDF
         </label>
-        {loading && <Spinner />}
+        {loading && <div data-testid="upload-spinner"><Spinner /></div>}
       </div>
     </header>
   );
